@@ -1,6 +1,6 @@
 import unittest
 
-from components_filter import ComponentsFilter
+from components_filter.components_filter import ComponentsFilter
 
 
 class TestsComponentsFilter(unittest.TestCase):

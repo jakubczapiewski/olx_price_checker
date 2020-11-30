@@ -4,9 +4,9 @@ import urllib.parse
 
 import numpy as np
 
-from allegro_api import SearchEngine
-from components_filter import ComponentsFilter
-from olx_api import OLXRequests
+from allegro_api.allegro_api import SearchEngine
+from components_filter.components_filter import ComponentsFilter
+from olx_api.olx_api import OLXRequests
 
 
 class PriceCalculator:
@@ -95,7 +95,7 @@ class PriceCalculator:
 
             return result
         except:
-            logging.error('Problems with get_price method')
+            logging.error('Price read fault')
 
     @staticmethod
     def price_filter(offer: dict) -> True or False:

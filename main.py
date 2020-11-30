@@ -5,9 +5,9 @@ import threading
 from concurrent.futures import as_completed
 from concurrent.futures.thread import ThreadPoolExecutor
 
-from allegro_api import SearchEngine, AllegroRequests
-from olx_api import OLXRequests
-from price_calculator import PriceCalculator
+from allegro_api.allegro_api import SearchEngine, AllegroRequests
+from olx_api.olx_api import OLXRequests
+from price_calculator.price_calculator import PriceCalculator
 
 
 def main(
@@ -30,6 +30,6 @@ def main(
     outcome = {}
     for x in as_completed(desc):
         res = x.result()
-        if (not only_profitable) or PriceCalculator.price_filter(copy.copy(res)):
+        if ((not only_profitable) or PriceCalculator.price_filter(copy.copy(res))) and res is not None:
             outcome.update(res)
     return outcome

@@ -1,17 +1,17 @@
 import threading
-import time
 
 import requests
 from bs4 import BeautifulSoup
+
+from request_moderator.request_moderator import TimeModerator
 
 
 class OLXRequests:
     url = 'https://www.olx.pl/elektronika/komputery/komputery-stacjonarne/'
 
-    def __init__(self, lock: threading.Lock, rpm: int = 60):
+    def __init__(self, lock: threading.Lock = threading.Lock(), rpm: int = 60):
         self.lock = lock
-        self.rps = (rpm - 1) / 60
-        self._last_request_time = 0
+        self.time_moderator = TimeModerator(rpm=rpm)
 
     @staticmethod
     def _get_html(page: int):
@@ -43,7 +43,6 @@ class OLXRequests:
         links = []
 
         while 1:
-
             content = OLXRequests._get_html(start_page)
             if not content or start_page > stop_page:
                 break
@@ -53,19 +52,14 @@ class OLXRequests:
         return links
 
     def get_description(self, url: str) -> [str, float]:
-        def request_time_moderator():
-            now = time.time()
-            delta_t = (now - self._last_request_time) - (1 / self.rps)
-            if delta_t < 0:
-                time.sleep(abs(delta_t))
 
         with self.lock:
-            request_time_moderator()
-            response = requests.get(url)
-            self._last_request_time = time.time()
+            with self.time_moderator:
+                response = requests.get(url)
 
         soup = BeautifulSoup(response.content, 'html.parser')
         price = soup.find('div', class_='pricelabel')
+
         try:
             price = float(str(price.strong.text.replace('zł', '').replace(' ', '').strip().lower()))
         except:

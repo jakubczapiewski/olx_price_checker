@@ -1,9 +1,10 @@
 import base64
 import json
 import threading
-import time
 
 import requests
+
+from request_moderator.request_moderator import TimeModerator
 
 
 class AllegroRequests:
@@ -21,8 +22,7 @@ class AllegroRequests:
         # requests Lock
         self.lock = lock
         # maximum number of requests pre second
-        self.rps = (rpm - 1) / 60
-        self._last_request_time = 0
+        self.time_moderator = TimeModerator(rpm=rpm)
 
     def authorize(self) -> None:
         code = f"{self.client_id}:{self.client_secret}".encode('utf-8')
@@ -42,12 +42,6 @@ class AllegroRequests:
             raise SystemError('Allegro Authorization problems. Check your client id and secret key.')
 
     def request(self, method: str, url: str, payload: dict, accept: str) -> json:
-        def request_time_moderator():
-            now = time.time()
-            delta_t = (now - self._last_request_time) - (1 / self.rps)
-            if delta_t < 0:
-                time.sleep(abs(delta_t))
-
         url = AllegroRequests.requests_url + url
         headers = {
             "Authorization": f"Bearer {self._access_token}",
@@ -57,9 +51,8 @@ class AllegroRequests:
 
         req = requests.Request(method, url=url, headers=headers, params=payload).prepare()
         with self.lock:
-            request_time_moderator()
-            response = self._session.send(req).json()
-            self._last_request_time = time.time()
+            with self.time_moderator:
+                response = self._session.send(req).json()
         return response
 
 
@@ -72,7 +65,7 @@ class SearchEngine:
 
     def search_offer(self, category_id: str = None, phrase: str = None, product_status='used') -> json:
         response = False
-        try_count = 5
+        try_number = 5
         url = "/offers/listing"
         sort = '+price'
         status = {
@@ -86,7 +79,7 @@ class SearchEngine:
             "parameter.11323": status[product_status],
             "sellingMode.format": 'BUY_NOW'
         }
-        for x in range(try_count):
+        for x in range(try_number):
             try:
                 response = self.allegro.request(method='get', url=url, payload=payload, accept=SearchEngine._api_v1)
                 break

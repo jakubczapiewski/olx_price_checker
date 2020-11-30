@@ -1,4 +1,5 @@
 import concurrent.futures
+import json
 import logging
 import os
 import sys
@@ -53,5 +54,5 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count()) as execut
 if not (('--json' in opts) or ('-j' in opts)):
     print(result)
 else:
-    file = open('result.json', 'w')
-    file.write(result)
+    with open('result.json', 'w') as file:
+        json.dump(result, file, sort_keys=True, indent=4)

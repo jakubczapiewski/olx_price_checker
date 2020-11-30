@@ -21,4 +21,4 @@ Show all offers, output in json file
 `python3 cli <allegro client id> <allegro client secret key> -np --json`
 
 ###Run tests 
-`test` 
+`tests` 
